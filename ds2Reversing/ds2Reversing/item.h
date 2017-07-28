@@ -38,6 +38,19 @@ typedef struct UNKNOWNSTRUCT2_
 	byte otherStuffMaybe[1];//real size unknown at this moment
 }UNKNOWNSTRUCT2;
 
+typedef struct itemAction_
+{
+	char* itemActionString;
+	byte u1;
+	byte u2;
+	__int32 arrayIndex1;//8 byte padding
+	__int32 u3;
+	int arrayIndex2;//arrayIndex1 and 2 seems to be the same 
+}itemAction;
 #define UNKNOWN byte
+#define GOLBALFUNCPTRARRAY 0x13F7B7D14//an array filled with a datastructure, that points to functions and other structures with func ptrs
+
+#define GLOBALINVALIDRETSTRING 0x140F5FBC8 //ptr to ptr "Invalid"
+#define GLOBALACTIONDESCRIPTIONARRAY 0x140F5FBE0 //ptr to ptr "L_hand1"
 
 typedef UNKNOWN calledInItemUseFromPtrArray(int* funcPtrTable, int someIterationCounter, WORD itemInfoId, WORD itemCount);
