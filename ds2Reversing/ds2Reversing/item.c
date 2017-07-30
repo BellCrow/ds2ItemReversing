@@ -1,6 +1,7 @@
 #include "item.h"
 //this is all more or less pseudo code, that is not meant to be executeable
-
+//im using this to determine the size of any struct at devtime . as i cant compile
+//template<size_t S> class Sizer { }; Sizer<sizeof(itemAction)> foo;
 										//R8				R9				RCX					RDX
 UNKNOWN decreaseItemCount(ds2Item* usedItem, int usedAmount, UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx)
 {
@@ -195,6 +196,8 @@ int* callIntoFunctionPtrArray(int* funcPtrBase)
 	return funcPtrBase[32];
 }
 
+
+
 //returns ptr to "Item[9]" if you use the item in the last Quickslot
 //0x000000013FA812E0
 //									RCX					  RDX				R8						 R9			
@@ -202,46 +205,70 @@ char* getItemUsageString(int* functionPtr, int modifiedQuickSlotIndex, __int32 i
 {
 	//saving register into the shadow space
 
-	//8 local Variables
-	//rsp## basically means it was rsp + ## as acces code
-	int loc1;
-	int loc2;
-	int loc3;
-	int loc4;
-	int loc5;
-	int loc6;
-	int loc7;
-	int loc8;
+	
 
 	//RDI
 	int* functionPtrLocalCopy = functionPtr;
 	__int32 itemCountLocalCopy = itemCount;
 	
-	//dont know what the argument was, that it was called with
-	convertSomeIdToAString(NULL);
+	//takes for some reason a pointer
+	itemAction* temp = convertModifiedQuickSlotIndexToActionstring((SHORT*)&modifiedQuickSlotIndex);
+	itemActionStruct itemActionStructure;
+	fillArgsInStruct(&itemActionStructure, temp->u2, itemInfoId);
 
+	//edx
+	int modifiedQuickslotIndexCopy = modifiedQuickSlotIndex;
+	stackFiller local;
+	//r8
+	__int32* structEntryCopy = &local.itemIdHigh;
+
+	local.itemCount = itemCountLocalCopy;
+	local.zeroMovedHere = 0;
+	local.itemIdHigh = itemActionStructure.m1;
+	local.itemIdLow = itemActionStructure.itemId;
+	local.itemActionId = itemActionStructure.actionInfoId;//was 4 on spell urn use
+	local.someGlobalValue = CONSTVALINGETITEMSTRING;
+
+	sub_13F3BFFE0();
 }
 
 //000000013FB51D60
-
-char* convertSomeIdToAString(short* someId)
+//retunrns some kind of structure,
+//			RCX	
+											
+itemAction* convertModifiedQuickSlotIndexToActionstring(short* modifiedQuickSlotIndex)
 {
-	short idTester = someId;
-	if (someId > 0x33)//= 51. is also char '3'
+	short indexTester = *modifiedQuickSlotIndex;
+	if (indexTester > 0x33)//= 51. is also char '3'. is this some kind of enum limit?
 		return (CHAR*)GLOBALINVALIDRETSTRING;
-	//rcx
-	short modifiedIdTester = 3*idTester;
-	CHAR* leftHandString = (CHAR*)GLOBALACTIONDESCRIPTIONARRAY;
+
+	itemAction* actionDescriptorArray = (itemAction*)GLOBALACTIONDESCRIPTIONARRAY;
 	//will calculate the itemslot, that is used from the given id.
 	//if you use the item in your third quickslot. you will get the string
 	//"Item[2]" back
 	//basically from the given array start we calculate an offset into the string ptr table
-	leftHandString = leftHandString + modifiedIdTester * 8;
-	return leftHandString;
+	//one of the structs,used is 3 * 8 bytes big
+	actionDescriptorArray += /*3 *  8 */ indexTester;
+	return actionDescriptorArray;
 }
 
 //0x13FB51BF0
-UNKNOWN unknownFuncViaProxyJmp(UNKNOWN* unknonwnDatatype, itemAction* action, int itemInfoId)//could also be the itemId. but it would be the same id anyways
+//													RCX					  RDX				R8	
+itemActionStruct* fillArgsInStruct(itemActionStruct* ustruct1, byte someactionValue, int itemInfoId)//could also be the itemId. but it would be the same id anyways
+{
+	ustruct1->m1 = 0;
+	//rax
+	itemActionStruct* localCopy = ustruct1;
+	//filling the args into some the given structure pointer
+	ustruct1->itemId = itemInfoId;
+	ustruct1->actionInfoId = someactionValue;
+	return localCopy;
+}
+
+
+//000000013F3BFFE0
+//									RCX					  RDX				R8						 R9			
+UNKNOWN sub_13F3BFFE0()
 {
 
 }

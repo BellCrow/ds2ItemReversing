@@ -1,0 +1,51 @@
+﻿Der Buildvorgang wurde am 30.07.2017 21:43:49 gestartet.
+     1>Projekt "C:\Users\peremptor\Desktop\ds2ItemReversing\ds2Reversing\ds2Reversing\ds2Reversing.vcxproj" auf Knoten "2", Rebuild Ziel(e).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /sdl /Od /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TC /errorReport:prompt item.c
+         item.c
+     1>c:\users\peremptor\desktop\ds2itemreversing\ds2reversing\ds2reversing\item.h(6): error C2016: In C muss eine Struktur oder Union mindestens einen Member enthalten.
+     1>c:\users\peremptor\desktop\ds2itemreversing\ds2reversing\ds2reversing\item.h(6): error C2061: Syntaxfehler: Bezeichner 'ds2Item'
+     1>c:\users\peremptor\desktop\ds2itemreversing\ds2reversing\ds2reversing\item.h(7): error C2143: Syntaxfehler: Es fehlt '{' vor '*'
+     1>c:\users\peremptor\desktop\ds2itemreversing\ds2reversing\ds2reversing\item.h(17): error C2059: Syntaxfehler: '}'
+     1>c:\users\peremptor\desktop\ds2itemreversing\ds2reversing\ds2reversing\item.h(25): error C2061: Syntaxfehler: Bezeichner 'ds2Item'
+     1>c:\users\peremptor\desktop\ds2itemreversing\ds2reversing\ds2reversing\item.h(33): error C2059: Syntaxfehler: '}'
+     1>item.c(6): error C2143: Syntaxfehler: Es fehlt ')' vor '*'
+     1>item.c(6): error C2143: Syntaxfehler: Es fehlt '{' vor '*'
+     1>item.c(6): error C2059: Syntaxfehler: 'Typ'
+     1>item.c(6): error C2059: Syntaxfehler: ')'
+     1>item.c(39): error C2143: Syntaxfehler: Es fehlt ')' vor '*'
+     1>item.c(39): error C2143: Syntaxfehler: Es fehlt '{' vor '*'
+     1>item.c(39): error C2371: 'UNKNOWNSTRUCT2': Neudefinition; unterschiedliche Basistypen
+                 c:\users\peremptor\desktop\ds2itemreversing\ds2reversing\ds2reversing\item.h(40): Siehe Deklaration von 'UNKNOWNSTRUCT2'
+     1>item.c(39): error C2143: Syntaxfehler: Es fehlt ';' vor '*'
+     1>item.c(39): error C2059: Syntaxfehler: 'Typ'
+     1>item.c(39): error C2059: Syntaxfehler: ')'
+     1>item.c(145): warning C4013: 'getSomeFunctionPtr' undefiniert; Annahme: extern mit Rückgabetyp int
+     1>item.c(145): warning C4047: 'Initialisierung': Anzahl der Dereferenzierungen bei 'int *' und 'int' unterschiedlich
+     1>item.c(149): warning C4047: '!=': Anzahl der Dereferenzierungen bei 'int' und 'void *' unterschiedlich
+     1>item.c(169): warning C4013: 'getItemUsageString' undefiniert; Annahme: extern mit Rückgabetyp int
+     1>item.c(174): error C2373: 'getSomeFunctionPtr': Neudefinition; unterschiedliche Modifizierer
+     1>item.c(176): error C2075: 'functions': für die Initialisierung eines Arrays sind geschweifte Klammern erforderlich
+     1>item.c(180): warning C4013: 'getFunctionFromArray' undefiniert; Annahme: extern mit Rückgabetyp int
+     1>item.c(180): warning C4047: '=': Anzahl der Dereferenzierungen bei 'int *' und 'int' unterschiedlich
+     1>item.c(183): warning C4047: 'Initialisierung': Anzahl der Dereferenzierungen bei 'int *' und 'int' unterschiedlich
+     1>item.c(187): warning C4013: 'callIntoFunctionPtrArray' undefiniert; Annahme: extern mit Rückgabetyp int
+     1>item.c(187): warning C4047: 'return': Anzahl der Dereferenzierungen bei 'int *' und 'int' unterschiedlich
+     1>item.c(190): error C2373: 'getFunctionFromArray': Neudefinition; unterschiedliche Modifizierer
+     1>item.c(192): warning C4047: 'return': Anzahl der Dereferenzierungen bei 'int *' und 'int' unterschiedlich
+     1>item.c(195): error C2373: 'callIntoFunctionPtrArray': Neudefinition; unterschiedliche Modifizierer
+     1>item.c(196): warning C4047: 'return': Anzahl der Dereferenzierungen bei 'int *' und 'int' unterschiedlich
+     1>item.c(205): error C2373: 'getItemUsageString': Neudefinition; unterschiedliche Modifizierer
+     1>item.c(215): warning C4013: 'convertModifiedQuickSlotIndexToActionstring' undefiniert; Annahme: extern mit Rückgabetyp int
+     1>item.c(215): warning C4047: 'Initialisierung': Anzahl der Dereferenzierungen bei 'itemAction *' und 'int' unterschiedlich
+     1>item.c(217): warning C4013: 'fillArgsInStruct' undefiniert; Annahme: extern mit Rückgabetyp int
+     1>item.c(232): warning C4013: 'sub_13F3BFFE0' undefiniert; Annahme: extern mit Rückgabetyp int
+     1>item.c(240): error C2373: 'convertModifiedQuickSlotIndexToActionstring': Neudefinition; unterschiedliche Modifizierer
+     1>item.c(243): warning C4133: 'return': Inkompatible Typen - von 'CHAR *' zu 'itemAction *'
+     1>item.c(258): error C2373: 'fillArgsInStruct': Neudefinition; unterschiedliche Modifizierer
+     1>item.c(272): error C2371: 'sub_13F3BFFE0': Neudefinition; unterschiedliche Basistypen
+     1>Die Erstellung des Projekts "C:\Users\peremptor\Desktop\ds2ItemReversing\ds2Reversing\ds2Reversing\ds2Reversing.vcxproj" ist abgeschlossen, Rebuild Ziel(e) -- FEHLER.
+
+Fehler beim Buildvorgang.
+
+Verstrichene Zeit 00:00:01.02
