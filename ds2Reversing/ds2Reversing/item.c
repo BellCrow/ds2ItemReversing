@@ -2,48 +2,121 @@
 //this is all more or less pseudo code, that is not meant to be executeable
 //im using this to determine the size of any struct at devtime . as i cant compile
 //template<size_t S> class Sizer { }; Sizer<sizeof(itemAction)> foo;
-										//R8				R9				RCX					RDX
+									//R8				R9				RCX					RDX
 UNKNOWN decreaseItemCount(ds2Item* usedItem, int usedAmount, UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx)
 {
+
+	int local1;
+	int local2;
+	int local3;
+	int local4;
+
 	ds2Item* usedItemRefClone/*mov in RBX*/ = usedItem;
 	int usedAmountClone/*mov in (E/R)SI*/ = usedAmount;
 
 	UNKNOWNSTRUCT2* rbpAsRdx/*mov in RDX*/ = rdx;
 	UNKNOWNSTRUCT1* rdiAsRcx = rcx;
 
-	if (rcx->getCheckedAtStart == 0)
+	if (rcx->getCheckedAtStart == 0 || rcx->getCheckedAtStart == 1)
 	{
 
 	}
 	else
 	{
-		if (rcx->getCheckedAtStart == 1)
+		if (usedItemRefClone->count >= usedAmountClone)
 		{
-			if (usedItemRefClone->count == usedAmountClone)
-			{
-				//using up stack. so unlink and stuff
-			}
-			else
-			{					//R8			R9				RCX			RDX
-				callfunc1(usedItemRefClone, usedAmountClone, rdiAsRcx, rbpAsRdx);
-			}
+			//using up stack. so unlink and stuff
+			int* u1 = rdiAsRcx->functionPtrArray;
+			__int32 itemInfoIdClone = usedItemRefClone->itemInfoId;
+			//real call is a register relative call
+			//u1[9](rdiAsRcx->functionPtrArray, usedItemRefClone->itemInfoId);
+			sub_13FEEAAE0(rdiAsRcx, usedItem->itemInfoId);
 		}
 		else
-		{
-
+		{					//R8			R9				RCX			RDX
+			//dont know what this is. this call leads to madness
+			callfunc1(usedItemRefClone, usedAmountClone, rdiAsRcx, rbpAsRdx);
+			usedItemRefClone->count -= usedAmountClone;
+			updateQuickInfoArray(rdiAsRcx, usedItemRefClone);
+			return;
 		}
 	}
 }
 
-//									RCX					  RDX			   R8				 R9				
+//13FEEAAE0(was this address on prismstone(i think) useage
+//										RCX				  RDX
+BOOL sub_13FEEAAE0(UNKNOWNSTRUCT1* arg1, __int32 itemInfoId)
+{
+	//RBX
+	UNKNOWNSTRUCT1* localCopy = arg1;
+	sub_13FEF7980(arg1->callBackTbl, itemInfoId);
+
+}
+//000000013FEF7980
+void sub_13FEF7980(callBacktable* callBackTable, __int32 itemInfoId)
+{
+	//this is the ID of the santiers spear
+	WORD shadow2_38 = 0x319750;
+	//rbx
+	int* localCallBackFuncCopy = callBackTable;
+	//this is also the id of the santiers spear???
+	if (itemInfoId != 0x319b38)//is this a way to make 2 ids stand for the same id?
+		shadow2_38 = itemInfoId;
+	//is this a skip code on iteration
+	if (shadow2_38 == callBackTable->itemId && callBackTable->bitFlags & 1)
+	{
+		return;
+	}
+
+	callBackTableLevel2* level2 = callBackTable->functionPtr1;
+	sub_13FD7E8C0(level2,itemInfoId);
+}
+
+
+//0x13FD7E8C0
+//										RCX					RDX
+UNKNOWN sub_13FD7E8C0(callBackTableLevel2* arg1,__int32 itemInfoId)
+{
+	int* 
+}
+
+//0x13FEEA2D0
+void updateQuickInfoArray(UNKNOWNSTRUCT1* rcx, ds2Item* usedItem)
+{
+	//r8
+	WORD localCopyItemActionId = usedItem->itemActioId;
+	//r9
+	UNKNOWNSTRUCT1* localUStructCopy = rcx;
+					//4069d
+	short subValue = 0x1000;
+	//the subvalue can be 0x1000(4069d), 0xF00(3840d),0 or 0xFFFF(-1d/65535d) 
+	if (usedItem->itemActioId <  subValue)
+	{
+		subValue = 0xF00;
+		if (usedItem->itemActioId < subValue)
+		{
+			subValue = 1;
+			if (usedItem->itemActioId == 0)//Darksign has item actionId 0
+				subValue += 1;
+		}
+	}
+
+	itemArrayEntry* ref = localUStructCopy->shortInfoItemArray;
+	localCopyItemActionId -= subValue;
+	
+
+	//this is done in the assembly to make up for the size of the structure of the array, that is accesed next
+	//localCopyItemActionId *= 2;
+	//updating the count in the quickarray
+	ref[localCopyItemActionId].itemCount = usedItem->count;
+}
+
+
+#pragma region callFuncStuff
+//								RCX					  RDX			   R8				 R9				
 UNKNOWN callfunc1(UNKNOWNSTRUCT1* uarg1, UNKNOWNSTRUCT2* uarg2,ds2Item* usedItem, int usedAmount )
 {
-	int shadowspace[4];
-	shadowspace[0] = 0;//rbx
-	shadowspace[1] = 0;//rbp
-	shadowspace[2] = 0;//rsi
-	shadowspace[3] = 0;//rdi
-
+	
 	UNKNOWNSTRUCT1* RDIuarg1Copy = uarg1;
 	SHORT unknownShort = uarg1->someShort;//tested later if this is 0x2bc
 
@@ -270,5 +343,7 @@ itemActionStruct* fillArgsInStruct(itemActionStruct* ustruct1, byte someactionVa
 //									RCX					  RDX				R8						 R9			
 UNKNOWN sub_13F3BFFE0()
 {
-
+	//where even am I right now?!!
 }
+
+#pragma endregion
