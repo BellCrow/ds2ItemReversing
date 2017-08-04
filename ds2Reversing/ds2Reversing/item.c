@@ -2,15 +2,9 @@
 //this is all more or less pseudo code, that is not meant to be executeable
 //im using this to determine the size of any struct at devtime . as i cant compile
 //template<size_t S> class Sizer { }; Sizer<sizeof(itemAction)> foo;
-									//R8				R9				RCX					RDX
-UNKNOWN decreaseItemCount(ds2Item* usedItem, int usedAmount, UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx)
+									//	RCX					RDX			R8				R9	
+UNKNOWN decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedItem, int usedAmount)
 {
-
-	int local1;
-	int local2;
-	int local3;
-	int local4;
-
 	ds2Item* usedItemRefClone/*mov in RBX*/ = usedItem;
 	int usedAmountClone/*mov in (E/R)SI*/ = usedAmount;
 
@@ -26,15 +20,21 @@ UNKNOWN decreaseItemCount(ds2Item* usedItem, int usedAmount, UNKNOWNSTRUCT1* rcx
 		if (usedItemRefClone->count >= usedAmountClone)
 		{
 			//using up stack. so unlink and stuff
-			int* u1 = rdiAsRcx->functionPtrArray;
+			funcPtrArray* fp = rdiAsRcx->functionPtrArray;
 			__int32 itemInfoIdClone = usedItemRefClone->itemInfoId;
 			//real call is a register relative call
-			//u1[9](rdiAsRcx->functionPtrArray, usedItemRefClone->itemInfoId);
-			sub_13FEEAAE0(rdiAsRcx, usedItem->itemInfoId);
+			//fp->func9(rdiAsRcx->functionPtrArray, usedItemRefClone->itemInfoId);
+			if (sub_13FEEAAE0(rdiAsRcx, usedItem->itemInfoId))
+			{
+				//fp->func11(rdiAsRcx);
+				clearAnotherItemListEntryFromStruct(rdiAsRcx);
+			}
+			sub_13FE9A370(rdiAsRcx, usedItem);
 		}
 		else
-		{					//R8			R9				RCX			RDX
+		{
 			//dont know what this is. this call leads to madness
+			//				R8				R9				RCX			RDX
 			callfunc1(usedItemRefClone, usedAmountClone, rdiAsRcx, rbpAsRdx);
 			usedItemRefClone->count -= usedAmountClone;
 			updateQuickInfoArray(rdiAsRcx, usedItemRefClone);
@@ -43,41 +43,60 @@ UNKNOWN decreaseItemCount(ds2Item* usedItem, int usedAmount, UNKNOWNSTRUCT1* rcx
 	}
 }
 
+//0x13FE9A370
+void sub_13FE9A370(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+{
+	if (arg->itemListEntry != usedItem)
+		return;
+	if (arg->itemListEntry == arg->shortInfoItemArray)
+		//TODO stopped here
+}
+
+//0x13FE9B210
+void clearAnotherItemListEntryFromStruct(UNKNOWNSTRUCT1* arg)
+{
+	arg->anotherItemListEntry = 0;
+}
 //13FEEAAE0(was this address on prismstone(i think) useage
-//										RCX				  RDX
-BOOL sub_13FEEAAE0(UNKNOWNSTRUCT1* arg1, __int32 itemInfoId)
+//									RCX				  RDX
+BOOL sub_13FEEAAE0(UNKNOWNSTRUCT1* structArray, __int32 itemInfoId)
 {
 	//RBX
-	UNKNOWNSTRUCT1* localCopy = arg1;
-	sub_13FEF7980(arg1->callBackTbl, itemInfoId);
-
+	UNKNOWNSTRUCT1* localCopy = structArray;
+	BOOL ret = calledAtRandomMoments(structArray->callBackTbl, itemInfoId);
+	paramList* params = structArray->callBackTbl->paramList;
+	//actually a jump
+	return checkParamListMember(params->paramItemBytes);
 }
 //000000013FEF7980
-void sub_13FEF7980(callBacktable* callBackTable, __int32 itemInfoId)
+//this function is called from various different 
+//functions. Also on the loading screen. it probably is some item enumeration code
+BOOL calledAtRandomMoments(callBacktable* callBackTable, __int32 itemInfoId)
 {
 	//this is the ID of the santiers spear
 	WORD shadow2_38 = 0x319750;
 	//rbx
 	int* localCallBackFuncCopy = callBackTable;
 	//this is also the id of the santiers spear???
-	if (itemInfoId != 0x319b38)//is this a way to make 2 ids stand for the same id?
+	if (itemInfoId != 0x319b38)//is this a way to make 2 ids stand for the same item?
 		shadow2_38 = itemInfoId;
 	//is this a skip code on iteration
 	if (shadow2_38 == callBackTable->itemId && callBackTable->bitFlags & 1)
 	{
 		return;
 	}
-
-	callBackTableLevel2* level2 = callBackTable->functionPtr1;
-	sub_13FD7E8C0(level2,itemInfoId);
+	//lots of code missing here
+	
 }
 
-
-//0x13FD7E8C0
+//0x13FE98160
 //										RCX					RDX
-UNKNOWN sub_13FD7E8C0(callBackTableLevel2* arg1,__int32 itemInfoId)
+//the call to this function was actually a jmp
+BOOL checkParamListMember(paramItemBytes* itemBytes)
 {
-	int* 
+	if (itemBytes != NULL && itemBytes->checkedAgainst0x1C2 == 0x1C2)//450d
+		return TRUE;
+	return FALSE;
 }
 
 //0x13FEEA2D0
@@ -307,7 +326,7 @@ char* getItemUsageString(int* functionPtr, int modifiedQuickSlotIndex, __int32 i
 
 //000000013FB51D60
 //retunrns some kind of structure,
-//			RCX	
+//																	RCX	
 											
 itemAction* convertModifiedQuickSlotIndexToActionstring(short* modifiedQuickSlotIndex)
 {

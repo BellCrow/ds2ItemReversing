@@ -3,8 +3,8 @@
 #define ITEMISINQUICKSLOTBIT 3
 typedef struct ds2Item_
 {
-	ds2Item* flink;//0x0
-	ds2Item* blink;//0x8
+	ds2Item* blink;//0x0
+	ds2Item* flink;//0x8
 	__int32 unknown1;//0x10
 	__int32 itemInfoId;//0x14  //what item information text is used for the item
 	__int32 itemId;// 0x18//the shown image of the item
@@ -20,52 +20,108 @@ typedef struct ds2Item_
 //and func functions, that are associated with item management
 typedef struct UNKNOWNSTRUCT1_
 {
-	int* functionPtrArray;
-	int* uPtr1;
-	int* uPtr2;
+	funcPtrArray* functionPtrArray;
+	paramList* paramStruct;
+	ds2Item* itemListEntry;//was dark sign on first check
 	ds2Item* quickSlotsArray;
-	int* pointsToZeroBuffer;
+	itemListFan* itemListEntries;
 	itemArrayEntry* shortInfoItemArray;
 	WORD someShort;//+0x30
 	byte pad1[2];
 	byte getCheckedAtStart;
 	byte QuickSlotArrayIterationLimit;
 	byte pad2[3];
-	callBacktable* callBackTbl;
+	callBacktable* callBackTbl;//in itemuseCall same ptr as first member
+	ds2Item* anotherItemListEntry;
+	itemArrayEntry* allItemsInPossesionShortInfoArray;
+	int bunchOfFlags;
+
 } UNKNOWNSTRUCT1;
 
-typedef struct callBackTable_
-{
-	callBackTableLevel2* functionPtr1;
-	int functionPtr2;
-	int functionPtr3;
-	int functionPtr4;
-	int functionPtr5;
-	int functionPtr6;
-	int functionPtr7;
-	int functionPtr8;
-	int functionPtr9;
-	int functionPtr10;
-	int zeroMem;
-	int* ItemIdArrayInOrder;//is in order? also points to some area with param strings
-	int* someUpCountingStructure;
-	int zeroMem2;
-	int itemId;
-	DWORD OnlyFFs;
-	DWORD someShortSizedValue;//was 0x2bc on rusted coin use
-	int OnlyFFs2;
-	DWORD padding;
-	short padding2;
-	byte padding3;
-	byte bitFlags;//should be offset 0x88
-}callBacktable;
+	typedef struct itemListFan_
+	{
+		ds2Item* entryItem;
+		ds2Item* middleItem;//?
+		ds2Item* lastItem;//?
+		ds2Item* lastItem2;//?
+	}itemListFan;
 
-typedef struct callBackTableLevel2_
-{
-	int* funcPtr;
-	int* funcPtr2;
-	int* usedPtr;
-}callBackTableLevel2;
+	//thenames are just derived from a fixed offset of the address, 
+	//where these ptr point, that contains a unicode string
+	typedef struct paramList_
+	{
+		int* itemTypeParam;
+		int* itemUsageParam;
+		int* itemLotParam;
+		int* estusflaskLvDataParam;
+		int* menuCategoryIconParam;
+		int* shopLineUpParam;
+		int* soundObjectBreakParam;
+		//something with the same itemids in the first two fields
+		paramItemBytes* paramItemBytes;
+	}paramList;
+
+	typedef struct paramItemBytes_
+	{
+		int padding[8];
+		DWORD checkedAgainst0x1C2;
+		DWORD padding2;
+	}paramItemBytes;
+
+	//size 0x80 bytes
+	typedef struct funcPtrArray_
+	{
+		int* func1;
+		int* func2;
+		int* func3;
+		int* func4;
+		int* func5;
+		int* func6;
+		int* func7;
+		int* func8;
+		int* func9;
+		int* func10;
+		int* func11;
+		int* func12;
+		int zeroMem;
+		int* func13;
+
+	}funcPtrArray;
+
+	typedef struct callBackTable_
+	{
+		paramList* paramList;
+		int functionPtr2;
+		int functionPtr3;
+		int functionPtr4;
+		int functionPtr5;
+		int functionPtr6;
+		int functionPtr7;
+		int functionPtr8;
+		int functionPtr9;
+		int functionPtr10;
+		int zeroMem;
+		int* ItemIdArrayInOrder;//is in order? also points to some area with param strings
+		int* someUpCountingStructure;
+		int zeroMem2;
+		int itemId;
+		DWORD OnlyFFs;
+		DWORD someShortSizedValue;//was 0x2bc on rusted coin use
+		int OnlyFFs2;
+		DWORD padding;
+		short padding2;
+		byte padding3;
+		byte bitFlags;//should be offset 0x88
+	}callBacktable;
+
+
+	//unused atm
+	typedef struct callBackTableLevel2_
+	{
+		int* funcPtr;
+		int* funcPtr2;
+		int* usedPtr;
+	}callBackTableLevel2;
 
 
 typedef struct itemArrayEntry_
