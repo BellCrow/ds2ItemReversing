@@ -11,19 +11,19 @@ typedef struct ds2Item_
 	WORD itemActioId;//0x1c//what this item will do altering this, will also alter the apperance of the item
 	//on uset ot he corresponding item
 	byte u3;
-	byte u4;
+	byte itemStatusFlags;
 	byte itemPositionFlags;//bit 3 == true -> item is in quickSlot
 	int count;
 }ds2Item;
 
 //this structure seems to contain a lot of ptr to datastructures
-//and func functions, that are associated with item management
+//and functions, that are associated with item management
 typedef struct UNKNOWNSTRUCT1_
 {
 	funcPtrArray* functionPtrArray;
 	paramList* paramStruct;
 	ds2Item* itemListEntry;//was dark sign on first check
-	ds2Item* quickSlotsArray;
+	ds2Item* itemListEnd;
 	itemListFan* itemListEntries;
 	itemArrayEntry* shortInfoItemArray;
 	WORD someShort;//+0x30
@@ -113,7 +113,6 @@ typedef struct UNKNOWNSTRUCT1_
 		byte padding3;
 		byte bitFlags;//should be offset 0x88
 	}callBacktable;
-
 
 	//unused atm
 	typedef struct callBackTableLevel2_

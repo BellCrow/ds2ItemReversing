@@ -3,7 +3,7 @@
 //im using this to determine the size of any struct at devtime . as i cant compile
 //template<size_t S> class Sizer { }; Sizer<sizeof(itemAction)> foo;
 									//	RCX					RDX			R8				R9	
-UNKNOWN decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedItem, int usedAmount)
+void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedItem, int usedAmount)
 {
 	ds2Item* usedItemRefClone/*mov in RBX*/ = usedItem;
 	int usedAmountClone/*mov in (E/R)SI*/ = usedAmount;
@@ -29,7 +29,14 @@ UNKNOWN decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* used
 				//fp->func11(rdiAsRcx);
 				clearAnotherItemListEntryFromStruct(rdiAsRcx);
 			}
-			sub_13FE9A370(rdiAsRcx, usedItem);
+			unlinkIfItemFirstEntry(rdiAsRcx, usedItem);
+			unlinkIfItemLastEntry(rdiAsRcx, usedItem);
+			sub_13FB9D850(rdiAsRcx, rbpAsRdx, usedItemRefClone);
+			if (usedItemRefClone->itemInfoId <= 0)
+			{
+				sub_13FB9A230(rdiAsRcx, usedItemRefClone);
+			}
+
 		}
 		else
 		{
@@ -43,13 +50,63 @@ UNKNOWN decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* used
 	}
 }
 
-//0x13FE9A370
-void sub_13FE9A370(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+//0x13FB9A230
+UNKNOWN sub_13FB9A230(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
 {
-	if (arg->itemListEntry != usedItem)
+	//r8				4069d
+	WORD subtractValue = 0x1000;
+	WORD localItemActionIdCopy = usedItem->itemActioId;
+	//							
+	if (localItemActionIdCopy < subtractValue)
+	{					//3850d
+		subtractValue = 0xF00;
+		if (localItemActionIdCopy < subtractValue)
+		{
+			if (localItemActionIdCopy < 0)
+				localItemActionIdCopy = 0;
+			else
+				localItemActionIdCopy = -1;
+		}
+		//TODO continue here
+	}
+}
+
+//0x13FB9D850
+//								RCX					  RDX			   R8
+UNKNOWN sub_13FB9D850(UNKNOWNSTRUCT1* arg, UNKNOWNSTRUCT2* arg2, ds2Item* usedItem)
+{
+
+	if (!(usedItem->itemStatusFlags & 0x2))
 		return;
-	if (arg->itemListEntry == arg->shortInfoItemArray)
-		//TODO stopped here
+
+	//ALOT OF MISSING CODE HERE
+	//debugged call just took the return
+}
+
+//0x13FB9A3A0
+void unlinkIfItemLastEntry(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+{
+	ds2Item* raxEndItem = arg->itemListEnd;
+	if (raxEndItem != usedItem)
+		return;
+	//only one item in list
+	if (arg->itemListEnd == arg->itemListEntry)
+		arg->itemListEnd = NULL;
+	else
+		arg->itemListEnd = arg->itemListEnd->blink;
+}
+
+//0x13FE9A370
+void unlinkIfItemFirstEntry(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+{
+	ds2Item* raxEntryItem = arg->itemListEntry;
+	if (raxEntryItem != usedItem)
+		return;
+	//only one element in the list?
+	if (arg->itemListEntry == arg->itemListEnd)
+		arg->itemListEntry = NULL;
+	else//the new entry is the one after the used up item
+		arg->itemListEntry = arg->itemListEntry->flink;
 }
 
 //0x13FE9B210
@@ -168,7 +225,7 @@ UNKNOWN callfunc1(UNKNOWNSTRUCT1* uarg1, UNKNOWNSTRUCT2* uarg2,ds2Item* usedItem
 					if (uarg1->QuickSlotArrayIterationLimit == 0)
 						return;
 					DWORD iterationCounter = 0;
-					ds2Item* iterator = (uarg1->quickSlotsArray);
+					ds2Item* iterator = (uarg1->itemListEnd);
 					//iterate through the quick itemslotsto get to the used item
 					while (iterator != usedItem)
 					{
