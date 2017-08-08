@@ -20,10 +20,10 @@ void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedIte
 		if (usedItemRefClone->count >= usedAmountClone)
 		{
 			//using up stack. so unlink and stuff
-			funcPtrArray* fp = rdiAsRcx->functionPtrArray;
+			funcPtrArray* fp = rdiAsRcx->vtable;
 			__int32 itemInfoIdClone = usedItemRefClone->itemInfoId;
 			//real call is a register relative call
-			//fp->func9(rdiAsRcx->functionPtrArray, usedItemRefClone->itemInfoId);
+			//fp->func9(rdiAsRcx->vtable, usedItemRefClone->itemInfoId);
 			if (sub_13FEEAAE0(rdiAsRcx, usedItem->itemInfoId))
 			{
 				//fp->func11(rdiAsRcx);
@@ -35,8 +35,69 @@ void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedIte
 			if (usedItemRefClone->itemInfoId <= 0)
 			{
 				sub_13FB9A230(rdiAsRcx, usedItemRefClone);
+				return usedAmountClone;
 			}
+			//r8
+			int itemCountClone = usedItemRefClone->count;
+			//eax
+			int itemUnknownInfo = *((byte*)usedItemRefClone->unknown1);//only getting the highest byte of the unknonwn number (little endian)
+			rdiAsRcx->gotDeced--;
+			//rdx
+			byte someCompareValue = usedItemRefClone->unknown1;
+			((byte)itemCountClone) <<= 2;//will most likely shift out all 1s
+			//cray cray stuff i know exDe
+			int compareValueModified = someCompareValue - 6;
+			//wtf is this?!
+			itemCountClone &= 1;
+			//checking how much/many of the used items, we can actually use?
+			if (((byte)compareValueModified) & 0xf9 || someCompareValue == 0xc)
+			{	
+				compareValueModified = 1;
+			}
+			else
+			{
+				compareValueModified = usedItemRefClone->count;
+			}
+			//rdx
+			ds2Item* flinkPtrOfUsed = usedItemRefClone->flink;
+			//rcx
+			ds2Item* blinkPtrOfUsed = usedItemRefClone->blink;
+			usedAmountClone -= compareValueModified;
+			//unlinking the itemstack from the list
+			if (flinkPtrOfUsed != NULL)
+			{
+				usedItemRefClone->flink->blink = usedItemRefClone->blink;
+			}
+			if (blinkPtrOfUsed != NULL)
+			{
+				usedItemRefClone->blink->flink = usedItemRefClone->flink;
+			}
+			//TODO stopped here 0x13FE6BB89
+			//ecx
+			WORD itemListIndexCopy = usedItemRefClone->itemListIndex;
 
+			//clearing the item structure, as the stack got used up
+			memset(usedItemRefClone, NULL, sizeof(ds2Item));
+			usedItemRefClone->itemListIndex = itemListIndexCopy;
+			//itemcountclone will be the amount left of this item
+			//rcx
+			UNKNOWNSTRUCT2* rcxarg = rbpAsRdx;
+
+			if (itemCountClone != 0)
+			{
+				sub_13F602180(rcxarg, usedItemRefClone);
+			}
+			else
+			{
+				if (itemUnknownInfo == 0x2)
+				{
+					sub_13F6021F0(rcxarg, usedItemRefClone);
+				}
+				else
+				{
+					sub_13F602110(rcxarg, usedItemRefClone);
+				}
+			}
 		}
 		else
 		{
@@ -50,25 +111,54 @@ void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedIte
 	}
 }
 
-//0x13FB9A230
-UNKNOWN sub_13FB9A230(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+//0x13F602110
+UNKNOWN sub_13F602110(UNKNOWNSTRUCT2* rcx, ds2Item* usedItem)
 {
-	//r8				4069d
+
+}
+
+//0x13F6021F0
+UNKNOWN sub_13F6021F0(UNKNOWNSTRUCT2* rcx, ds2Item* usedItem)
+{
+
+}
+
+//0x13F602180
+UNKNOWN sub_13F602180(UNKNOWNSTRUCT2* rcx, ds2Item* usedItem)
+{
+
+}
+//0x13FB9A230
+//								RCX					  RDX
+void sub_13FB9A230(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+{
+	//rax				4069d
 	WORD subtractValue = 0x1000;
-	WORD localItemActionIdCopy = usedItem->itemActioId;
-	//							
-	if (localItemActionIdCopy < subtractValue)
+	//r8
+	int localItemListIndexCopy = usedItem->itemListIndex;
+	//trying to determine, what kind of item we are dealing with
+	if (localItemListIndexCopy < subtractValue)
 	{					//3850d
-		subtractValue = 0xF00;
-		if (localItemActionIdCopy < subtractValue)
+		subtractValue = 0xF00;//f00 is the item carry limit
+		if (localItemListIndexCopy < subtractValue)
 		{
-			if (localItemActionIdCopy < 0)
-				localItemActionIdCopy = 0;
+			//if we enter this branch, then we most likely deal with an item
+			//this line was XOR eax,eax
+			subtractValue = 0;
+			if (localItemListIndexCopy < 0)
+				localItemListIndexCopy = 0;
 			else
-				localItemActionIdCopy = -1;
+				localItemListIndexCopy = -1;
 		}
-		//TODO continue here
 	}
+
+	localItemListIndexCopy -= subtractValue;
+
+	localItemListIndexCopy <<= 4;
+	localItemListIndexCopy += (int)arg->shortInfoItemArray;
+
+	*(int*)localItemListIndexCopy = arg;
+	*(((int*)localItemListIndexCopy)+1) = arg;
 }
 
 //0x13FB9D850
@@ -160,19 +250,19 @@ BOOL checkParamListMember(paramItemBytes* itemBytes)
 void updateQuickInfoArray(UNKNOWNSTRUCT1* rcx, ds2Item* usedItem)
 {
 	//r8
-	WORD localCopyItemActionId = usedItem->itemActioId;
+	WORD localCopyItemActionId = usedItem->itemListIndex;
 	//r9
 	UNKNOWNSTRUCT1* localUStructCopy = rcx;
 					//4069d
 	short subValue = 0x1000;
 	//the subvalue can be 0x1000(4069d), 0xF00(3840d),0 or 0xFFFF(-1d/65535d) 
-	if (usedItem->itemActioId <  subValue)
+	if (usedItem->itemListIndex <  subValue)
 	{
 		subValue = 0xF00;
-		if (usedItem->itemActioId < subValue)
+		if (usedItem->itemListIndex < subValue)
 		{
 			subValue = 1;
-			if (usedItem->itemActioId == 0)//Darksign has item actionId 0
+			if (usedItem->itemListIndex == 0)//Darksign has item actionId 0
 				subValue += 1;
 		}
 	}
@@ -247,7 +337,7 @@ UNKNOWN callfunc1(UNKNOWNSTRUCT1* uarg1, UNKNOWNSTRUCT2* uarg2,ds2Item* usedItem
 					}
 					else if (subtractValue == uarg1->someShort)//should be always true?
 					{
-						int* funcPtrArryEntry = callSaveUStruct->functionPtrArray;
+						int* funcPtrArryEntry = callSaveUStruct->vtable;
 						int itemInfoId = callSaveItemPtr->itemInfoId;
 						iterationCounter += 0x12;//???
 						//not sure what this is yet

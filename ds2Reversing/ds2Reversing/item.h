@@ -5,10 +5,14 @@ typedef struct ds2Item_
 {
 	ds2Item* blink;//0x0
 	ds2Item* flink;//0x8
-	__int32 unknown1;//0x10
+	__int32 constZero;//seems at least so
 	__int32 itemInfoId;//0x14  //what item information text is used for the item
 	__int32 itemId;// 0x18//the shown image of the item
-	WORD itemActioId;//0x1c//what this item will do altering this, will also alter the apperance of the item
+	WORD itemListIndex;//0x1c//what this item will do altering this, will also alter the apperance of the item
+	//0x1e has something to do with the amount of this item can actually be used
+	byte unknown1;
+	//0x1d
+	byte unknown2;
 	//on uset ot he corresponding item
 	byte u3;
 	byte itemStatusFlags;
@@ -20,14 +24,15 @@ typedef struct ds2Item_
 //and functions, that are associated with item management
 typedef struct UNKNOWNSTRUCT1_
 {
-	funcPtrArray* functionPtrArray;
+	funcPtrArray* vtable;
 	paramList* paramStruct;
 	ds2Item* itemListEntry;//was dark sign on first check
 	ds2Item* itemListEnd;
 	itemListFan* itemListEntries;
 	itemArrayEntry* shortInfoItemArray;
 	WORD someShort;//+0x30
-	byte pad1[2];
+	byte pad1;
+	byte gotDeced;
 	byte getCheckedAtStart;
 	byte QuickSlotArrayIterationLimit;
 	byte pad2[3];
@@ -35,7 +40,6 @@ typedef struct UNKNOWNSTRUCT1_
 	ds2Item* anotherItemListEntry;
 	itemArrayEntry* allItemsInPossesionShortInfoArray;
 	int bunchOfFlags;
-
 } UNKNOWNSTRUCT1;
 
 	typedef struct itemListFan_
