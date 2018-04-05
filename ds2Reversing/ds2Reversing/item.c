@@ -2,14 +2,14 @@
 //this is all more or less pseudo code, that is not meant to be executeable
 //im using this to determine the size of any struct at devtime . as i cant compile
 //template<size_t S> class Sizer { }; Sizer<sizeof(itemAction)> foo;
-									//	RCX					RDX			R8				R9	
-void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedItem, int usedAmount)
+//	RCX					RDX			R8				R9	
+void decreaseItemCount(itemManager* rcx, UNKNOWNSTRUCT2* rdx, ds2Item* usedItem, int usedAmount)
 {
 	ds2Item* usedItemRefClone/*mov in RBX*/ = usedItem;
 	int usedAmountClone/*mov in (E/R)SI*/ = usedAmount;
 
 	UNKNOWNSTRUCT2* rbpAsRdx/*mov in RDX*/ = rdx;
-	UNKNOWNSTRUCT1* rdiAsRcx = rcx;
+	itemManager* rdiAsRcx = rcx;
 
 	if (rcx->getCheckedAtStart == 0 || rcx->getCheckedAtStart == 1)
 	{
@@ -17,7 +17,7 @@ void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedIte
 	}
 	else
 	{
-		if (usedItemRefClone->count >= usedAmountClone)
+		if (usedItemRefClone->count <= usedAmountClone)
 		{
 			//using up stack. so unlink and stuff
 			funcPtrArray* fp = rdiAsRcx->vtable;
@@ -45,13 +45,13 @@ void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedIte
 			//rdx
 			byte someCompareValue = usedItemRefClone->unknown1;
 			((byte)itemCountClone) <<= 2;//will most likely shift out all 1s
-			//cray cray stuff i know exDe
+			//cray cray stuff i know 
 			int compareValueModified = someCompareValue - 6;
 			//wtf is this?!
 			itemCountClone &= 1;
 			//checking how much/many of the used items, we can actually use?
 			if (((byte)compareValueModified) & 0xf9 || someCompareValue == 0xc)
-			{	
+			{
 				compareValueModified = 1;
 			}
 			else
@@ -72,12 +72,12 @@ void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedIte
 			{
 				usedItemRefClone->blink->flink = usedItemRefClone->flink;
 			}
-			//TODO stopped here 0x13FE6BB89
 			//ecx
 			WORD itemListIndexCopy = usedItemRefClone->itemListIndex;
 
 			//clearing the item structure, as the stack got used up
 			memset(usedItemRefClone, NULL, sizeof(ds2Item));
+			//writing back the itemListIndex in the empty srtucture
 			usedItemRefClone->itemListIndex = itemListIndexCopy;
 			//itemcountclone will be the amount left of this item
 			//rcx
@@ -114,7 +114,10 @@ void decreaseItemCount(UNKNOWNSTRUCT1* rcx, UNKNOWNSTRUCT2* rdx,ds2Item* usedIte
 //0x13F602110
 UNKNOWN sub_13F602110(UNKNOWNSTRUCT2* rcx, ds2Item* usedItem)
 {
-
+	//is actually relative to the first argument, but with an unreasonable big offset(0x259d8)
+	//is the datatype of the first arg really that big? i doubt it though
+	itemCount--;
+	rcx->incedInUseItemEpilog++;
 }
 
 //0x13F6021F0
@@ -130,7 +133,7 @@ UNKNOWN sub_13F602180(UNKNOWNSTRUCT2* rcx, ds2Item* usedItem)
 }
 //0x13FB9A230
 //								RCX					  RDX
-void sub_13FB9A230(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+void sub_13FB9A230(itemManager* arg, ds2Item* usedItem)
 {
 	//rax				4069d
 	WORD subtractValue = 0x1000;
@@ -143,7 +146,6 @@ void sub_13FB9A230(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
 		if (localItemListIndexCopy < subtractValue)
 		{
 			//if we enter this branch, then we most likely deal with an item
-			//this line was XOR eax,eax
 			subtractValue = 0;
 			if (localItemListIndexCopy < 0)
 				localItemListIndexCopy = 0;
@@ -158,12 +160,12 @@ void sub_13FB9A230(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
 	localItemListIndexCopy += (int)arg->shortInfoItemArray;
 
 	*(int*)localItemListIndexCopy = arg;
-	*(((int*)localItemListIndexCopy)+1) = arg;
+	*(((int*)localItemListIndexCopy) + 1) = arg;
 }
 
 //0x13FB9D850
 //								RCX					  RDX			   R8
-UNKNOWN sub_13FB9D850(UNKNOWNSTRUCT1* arg, UNKNOWNSTRUCT2* arg2, ds2Item* usedItem)
+UNKNOWN sub_13FB9D850(itemManager* arg, UNKNOWNSTRUCT2* arg2, ds2Item* usedItem)
 {
 
 	if (!(usedItem->itemStatusFlags & 0x2))
@@ -174,7 +176,7 @@ UNKNOWN sub_13FB9D850(UNKNOWNSTRUCT1* arg, UNKNOWNSTRUCT2* arg2, ds2Item* usedIt
 }
 
 //0x13FB9A3A0
-void unlinkIfItemLastEntry(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+void unlinkIfItemLastEntry(itemManager* arg, ds2Item* usedItem)
 {
 	ds2Item* raxEndItem = arg->itemListEnd;
 	if (raxEndItem != usedItem)
@@ -187,7 +189,7 @@ void unlinkIfItemLastEntry(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
 }
 
 //0x13FE9A370
-void unlinkIfItemFirstEntry(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
+void unlinkIfItemFirstEntry(itemManager* arg, ds2Item* usedItem)
 {
 	ds2Item* raxEntryItem = arg->itemListEntry;
 	if (raxEntryItem != usedItem)
@@ -200,21 +202,23 @@ void unlinkIfItemFirstEntry(UNKNOWNSTRUCT1* arg, ds2Item* usedItem)
 }
 
 //0x13FE9B210
-void clearAnotherItemListEntryFromStruct(UNKNOWNSTRUCT1* arg)
+void clearAnotherItemListEntryFromStruct(itemManager* arg)
 {
 	arg->anotherItemListEntry = 0;
 }
+
 //13FEEAAE0(was this address on prismstone(i think) useage
 //									RCX				  RDX
-BOOL sub_13FEEAAE0(UNKNOWNSTRUCT1* structArray, __int32 itemInfoId)
+BOOL sub_13FEEAAE0(itemManager* structArray, __int32 itemInfoId)
 {
 	//RBX
-	UNKNOWNSTRUCT1* localCopy = structArray;
+	itemManager* localCopy = structArray;
 	BOOL ret = calledAtRandomMoments(structArray->callBackTbl, itemInfoId);
 	paramList* params = structArray->callBackTbl->paramList;
 	//actually a jump
 	return checkParamListMember(params->paramItemBytes);
 }
+
 //000000013FEF7980
 //this function is called from various different 
 //functions. Also on the loading screen. it probably is some item enumeration code
@@ -233,7 +237,7 @@ BOOL calledAtRandomMoments(callBacktable* callBackTable, __int32 itemInfoId)
 		return;
 	}
 	//lots of code missing here
-	
+
 }
 
 //0x13FE98160
@@ -247,16 +251,16 @@ BOOL checkParamListMember(paramItemBytes* itemBytes)
 }
 
 //0x13FEEA2D0
-void updateQuickInfoArray(UNKNOWNSTRUCT1* rcx, ds2Item* usedItem)
+void updateQuickInfoArray(itemManager* rcx, ds2Item* usedItem)
 {
 	//r8
 	WORD localCopyItemActionId = usedItem->itemListIndex;
 	//r9
-	UNKNOWNSTRUCT1* localUStructCopy = rcx;
-					//4069d
+	itemManager* localUStructCopy = rcx;
+	//4069d
 	short subValue = 0x1000;
 	//the subvalue can be 0x1000(4069d), 0xF00(3840d),0 or 0xFFFF(-1d/65535d) 
-	if (usedItem->itemListIndex <  subValue)
+	if (usedItem->itemListIndex < subValue)
 	{
 		subValue = 0xF00;
 		if (usedItem->itemListIndex < subValue)
@@ -269,9 +273,9 @@ void updateQuickInfoArray(UNKNOWNSTRUCT1* rcx, ds2Item* usedItem)
 
 	itemArrayEntry* ref = localUStructCopy->shortInfoItemArray;
 	localCopyItemActionId -= subValue;
-	
 
-	//this is done in the assembly to make up for the size of the structure of the array, that is accesed next
+
+	//this is done in the assembly to make up for the size of the structure of the array, that is acessed next
 	//localCopyItemActionId *= 2;
 	//updating the count in the quickarray
 	ref[localCopyItemActionId].itemCount = usedItem->count;
@@ -280,80 +284,136 @@ void updateQuickInfoArray(UNKNOWNSTRUCT1* rcx, ds2Item* usedItem)
 
 #pragma region callFuncStuff
 //								RCX					  RDX			   R8				 R9				
-UNKNOWN callfunc1(UNKNOWNSTRUCT1* uarg1, UNKNOWNSTRUCT2* uarg2,ds2Item* usedItem, int usedAmount )
+UNKNOWN callfunc1(itemManager* itemMgr, UNKNOWNSTRUCT2* uarg2, ds2Item* usedItem, int usedAmount)
 {
-	
-	UNKNOWNSTRUCT1* RDIuarg1Copy = uarg1;
-	SHORT unknownShort = uarg1->someShort;//tested later if this is 0x2bc
 
-	INT32 callSaveUsedAmount = (INT32)usedAmount;//ebp
-	ds2Item* callSaveItemPtr = usedItem;//rbx
+	itemManager* RDIitemMgrCopy = itemMgr;
+	DWORD RCXunknownDWORD = itemMgr->someShort;//tested later if this is 0x2bc
 
-	WORD subtractValue = 0x2bc;
-	UNKNOWNSTRUCT2* callSaveUStruct = uarg2;//RSI
+	INT32 RBPusedAmountCopy = (INT32)usedAmount;//ebp
+	ds2Item* RBXusedItemCopy = usedItem;//rbx
 
-	if (isValueBelow0x2ba(unknownShort) != 0x00)
+	WORD R14subtractValue = 0x2bc;
+	UNKNOWNSTRUCT2* RSIuarg2Copy = uarg2;//RSI
+
+	if (isValueBelow0x2ba(RCXunknownDWORD) != 0x00)
 	{
-
+		RCXunknownDWORD = (DWORD)(R14subtractValue - 0x64);
 	}
 	else
 	{
-		if (isValueBelow0x2bc(RDIuarg1Copy->someShort) == 0)
+		RCXunknownDWORD = (DWORD)RDIitemMgrCopy->someShort;
+		if (isValueBelow0x2bc(RCXunknownDWORD) == 0 || RDIitemMgrCopy->someShort != R14subtractValue)
+		{
 			return;
+		}
+		RCXunknownDWORD = R14subtractValue;
+	}
+
+
+	//if the item we just used is not in a quickslot, then all is fine and the function returns
+	if (RBXusedItemCopy->itemPositionFlags & ITEMISINQUICKSLOTBIT != 1)//ITEMQUICKSLOTSTATE3 means it is in the quickslot
+	{
+		return;
+	}
+
+	//but if it is in a quickslot this wild ride begins
+	else
+	{
+
+		byte R8quickSlotCount = RDIitemMgrCopy->quickSlotCount;
+		DWORD RDXiterationCounter = 0;
+		ds2Item* RAXitemIterator = itemMgr->quickSlotItems;
+
+		if (R8quickSlotCount == 0)
+		{
+			return;
+		}
+
+		//iterate through the quick itemslots to get to the used item
+		while (RAXitemIterator != usedItem)
+		{
+			RAXitemIterator++;
+			RDXiterationCounter++;
+			//there are only 0xa (10) quick item slots, to iterate through
+			if (RDXiterationCounter >= itemMgr->quickSlotCount)
+				return;
+		}
+		//at this point we have either found the correct item ptr in the quickslots, or we must have already left the function
+		//due to array bounds
+
+		int R9currentItemCount = RAXitemIterator->count;
+		//decrease itemCount
+		R9currentItemCount -= RBPusedAmountCopy;
+
+
+		if (RCXunknownDWORD == 0x258)
+		{
+			void* RAXuarg2VTable = RSIuarg2Copy->vtable;
+
+		}
+		else if (R14subtractValue == itemMgr->someShort)//should be always true?
+		{
+			USTRUCT2VTABLE* RAXfuncPtrArryEntry = RSIuarg2Copy->vtable;
+			int itemInfoId = RBXusedItemCopy->itemInfoId;
+			RDXiterationCounter += 0x12;//???
+			//not sure what this is yet
+			//calling the 011th function from the given table, using the exact same table as an argument
+			//the code in the next line is the "real" code, i changed it here, so that i can write the function actually down
+			//((calledInItemUseFromPtrArray*)(RAXfuncPtrArryEntry + (0x88 / sizeof(RAXfuncPtrArryEntry))))(RAXfuncPtrArryEntry);
+			//here begins the madness
+			RAXfuncPtrArryEntry->extractingFuncPtr(RAXfuncPtrArryEntry, RDXiterationCounter, itemInfoId, RBXusedItemCopy->count);
+
+		}
 		else
 		{
-			if (!RDIuarg1Copy->someShort == subtractValue)
-				return;
-			else
-			{
-				//if the item we just used is not in a quickslot, then all is fine and the function returns
-				if (callSaveItemPtr->itemPositionFlags & ITEMISINQUICKSLOTBIT != 1)//ITEMQUICKSLOTSTATE3 means it is in the quickslot
-					return;
-				//but if it is in a quickslot this wild ride begins
-				else
-				{
-					if (uarg1->QuickSlotArrayIterationLimit == 0)
-						return;
-					DWORD iterationCounter = 0;
-					ds2Item* iterator = (uarg1->itemListEnd);
-					//iterate through the quick itemslotsto get to the used item
-					while (iterator != usedItem)
-					{
-						iterator++;
-						iterationCounter++;
-						//there are only 0xa (10) quick item slots, to iterate through
-						if (iterationCounter >= uarg1->QuickSlotArrayIterationLimit)
-							return;
-					}
-					//at this point we have either found the correct item ptr in the quickslots, or we must have already left the function
-					//due to array bounds
-					int currentItemCount = iterator->count;
-					//decrease itemCount
-					currentItemCount -= callSaveUsedAmount;
-
-					if (subtractValue == 0x258)
-					{
-
-					}
-					else if (subtractValue == uarg1->someShort)//should be always true?
-					{
-						int* funcPtrArryEntry = callSaveUStruct->vtable;
-						int itemInfoId = callSaveItemPtr->itemInfoId;
-						iterationCounter += 0x12;//???
-						//not sure what this is yet
-						//calling the 011th function from the given table, using the exact same table as an argument
-						//the code in the next line is the "real" code, i changed it here, so that i can write the function actually down
-						//((calledInItemUseFromPtrArray*)(funcPtrArryEntry + (0x88 / sizeof(funcPtrArryEntry))))(funcPtrArryEntry);
-						//here begins the madness
-						functionThatIsInFuncPtrArrayGotCalledOnItemConsume(funcPtrArryEntry, iterationCounter,itemInfoId,callSaveItemPtr->count);
-
-
-					}
-				}
-			}
+			return;
 		}
+
 	}
+
 }
+//								RCX							 RDX					  R8				 R9				
+UNKNOWN extractingFuncPtr(USTRUCT2VTABLE* RCXarg1, int RDXiterationCounterArg, int R8itemInfoid, int R9itemCount)
+{
+	//EDI
+	WORD itemInfoIdCopy = R8itemInfoid;
+	//EBP
+	WORD itemCountCopy = itemCount;
+	//RSI
+	int someIterationCounterCopy = RDXiterationCounterArg;
+	//R15
+	USTRUCT2VTABLE* funcPtrTableCopy = RCXarg1;
+
+	int* functionToExecute = getSomeFunctionPtr();
+	if (functionToExecute == NULL)
+		return;
+	__int32 itemInfoCallArg = -1;
+	if (itemInfoIdCopy != NULL)
+		itemInfoCallArg = itemInfoIdCopy;
+
+	//opposite of what happened before calling this function. was +12 in the caller function
+	//ECX
+	WORD modifiedIterationCounter = RDXiterationCounterArg - 0x12;
+	//is now again the zero based index of the quickslot 
+	//the item was in
+
+	//look if it is a consumeable with an amount?
+	if (itemCountCopy == 0 && itemInfoIdCopy > 0)
+	{
+		//some ptr arithmetic, that will end up putting the itemCount into the itemCountCopyArg
+		//cant hink of a reason, where this would be executed
+		//but at that point in execution, there is a ptr in R15, that is used with the 
+		//someIterationcounter Argument to calculate the base address of the used item
+		//TODO find out the relation between these pointers
+	}
+	//EAX
+	WORD secondModIterCounter = modifiedIterationCounter + 0x14;//??was actually call with just one line and no epi- or prolog
+	getItemUsageString(functionToExecute, secondModIterCounter, itemInfoCallArg, itemCountCopy);
+
+
+}
+
 
 byte isValueBelow0x2ba(short someShortValue)
 {
@@ -369,66 +429,48 @@ byte isValueBelow0x2bc(short someShortValue)
 	return 0x00;
 }
 
-//0x000000013F8F2D20
-void functionThatIsInFuncPtrArrayGotCalledOnItemConsume(int* funcPtrTable, int someIterationCounter,WORD itemInfoId,WORD itemCount)
+//gives back a functionptr i thin
+//also got called on game loading
+//and on clicking on an item to add it to the quickslots
+void* getSomeFunctionPtr(void)
 {
-	//EDI
-	WORD itemInfoIdCopy = itemInfoId;
-	//EBP
-	WORD itemCountCopy = itemCount;
-	//RSI
-	int someIterationCounterCopy = someIterationCounter;
-	//R15
-	int* funcPtrTableCopy = funcPtrTable;
-
-	int* functionToExecute = getSomeFunctionPtr();
-	if (functionToExecute == NULL)
-		return;
-	__int32 itemInfoCallArg = -1;
-	if (itemInfoIdCopy != NULL)
-		itemInfoCallArg = itemInfoIdCopy;
 	
-	//opposite of what happened before calling this function. was +12 in the caller function
-	//ECX
-	WORD modifiedIterationCounter = someIterationCounter - 0x12;
-	//is now again the zero based index of the quickslot 
-	//the item was in
+	globalManagerClass* RCXglobalManager = globMgr;
+	if (RCXglobalManager == NULL)
+		return NULL;
 
-	//look if it is a consumeable with an amount?
-	if (itemCountCopy == 0 && itemInfoIdCopy > 0)
-	{
-		//some ptr arithmetic, that will end up putting the itemCount into the itemCountCopyArg
-		//cant hink of a reason, where this would be executed
-		//but at that point in execution, there is a ptr in R15, that is used with the 
-		//someIterationcounter Argument to calculate the base address of the used item
-		//TODO find out the relation between these pointers
-	}
-	//EAX
-	WORD secondModIterCounter = modifiedIterationCounter + 0x14;//??was actually call with just one line an no epi- or prolog
-	getItemUsageString(functionToExecute, secondModIterCounter, itemInfoCallArg, itemCountCopy);
+	firstLevelStruct* firstlevel = RCXglobalManager->secondLevel;//funcptr with offset 0xD0
+	if (firstlevel == NULL)
+		return NULL;
 
-}
+	firstLevelStructVtable* vtable = firstlevel->vtable;
+	if (vtable == NULL)
+		return NULL;
 
-int* getSomeFunctionPtr(void)
-{
-
-	int* functions[] = *(int*)GOLBALFUNCPTRARRAY;
-	if (functions == NULL)
-		return FALSE;
-	int* functionPtrFromArray = (int*)functions[208 / sizeof(void*)];//was hex D0
-	functionPtrFromArray = getFunctionFromArray(functionPtrFromArray);
-	if (functionPtrFromArray == NULL)
-		return FALSE;
-	int* funcPtrArrayRDX = *functionPtrFromArray;
+	calledInGetFunctionPtr* RDXfuncPtr = vtable->calledInGetFuncPtr;
 	//the entry in this array is called with the given arg. changed here for easier working
 	//((&callIntoFunctionPtrArray)(funcPtrArrayRDX[96/sizeof(void*)]))();
 	//there are some identical functions to this one, where the only difference is the given array offset from this line
-	return callIntoFunctionPtrArray(functionPtrFromArray);
+	uclass1* ustruct = RDXfuncPtr(firstlevel);//functionbody is in RDXFuncPtr();
+
+	if (ustruct == NULL)
+	{
+		return NULL;
+	}
+	//stopped here 4.4.2018
+
 }
+
+//returns some function Ptr i think
+uclass1* RDXFuncPtr(firstLevelStruct* thisPtr)
+{
+	return thisPtr->uclass;
+}
+
 int* getFunctionFromArray(int* funcPtrArrayBase)
 {
 	//????
-	return funcPtrArrayBase[888/sizeof(void*)];
+	return funcPtrArrayBase[888 / sizeof(void*)];
 }
 int* callIntoFunctionPtrArray(int* funcPtrBase)
 {
@@ -442,14 +484,10 @@ int* callIntoFunctionPtrArray(int* funcPtrBase)
 //									RCX					  RDX				R8						 R9			
 char* getItemUsageString(int* functionPtr, int modifiedQuickSlotIndex, __int32 itemInfoId, __int32 itemCount)
 {
-	//saving register into the shadow space
-
-	
-
 	//RDI
 	int* functionPtrLocalCopy = functionPtr;
 	__int32 itemCountLocalCopy = itemCount;
-	
+
 	//takes for some reason a pointer
 	itemAction* temp = convertModifiedQuickSlotIndexToActionstring((SHORT*)&modifiedQuickSlotIndex);
 	itemActionStruct itemActionStructure;
@@ -474,7 +512,7 @@ char* getItemUsageString(int* functionPtr, int modifiedQuickSlotIndex, __int32 i
 //000000013FB51D60
 //retunrns some kind of structure,
 //																	RCX	
-											
+
 itemAction* convertModifiedQuickSlotIndexToActionstring(short* modifiedQuickSlotIndex)
 {
 	short indexTester = *modifiedQuickSlotIndex;
